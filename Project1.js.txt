@@ -1,0 +1,121 @@
+//CPSC 335-02
+//Project #1 - Cella Rule 150(10010110)
+//Group TJMM - Thomas Clark(thomas.c@csu.fullerton.edu), Justin Nyugen, Mike Oun, Mike Jimenez
+
+//Declare global objects for quick edits/updates
+let canvas = {cell_sz:5, wide:401, hgt:401};
+var frames = 0; //Counter for animation
+var frame_up = 2; //Update canvas after x frames
+let board = new Array(canvas.wide); //Used to keep track of the state of the board
+var nextUp = {x:0, y:0};
+let pause = 1;
+
+//Setup canvas - req for P5
+function setup(){
+  let sz = canvas.cell_sz; //let variables are blockscope
+  let wdt = canvas.wide * sz;
+  let hgt = canvas.hgt * sz;
+  createCanvas(wdt, hgt); //Create a canvas of WxH pixels
+  emptyBoard();
+  board[200][0]=1;//Add initial condition
+  drawGrid();
+  cella();
+  //console.log(board);
+}//End of setup
+
+//Function used by p5 which continually loops
+function draw(){
+	++frames;
+	nextDraw();
+}//End of draw
+
+//Function to add mousePressed event
+function mousePressed(){
+pause = !pause;
+}//End of mousePressed
+
+//Function to skip animation on keyPressed
+function keyPressed(){
+drawGrid();
+pause = false;
+}//End of keyPressed
+
+//Draw the blank grid to start
+function drawGrid(){
+
+  background(0);
+  for(let i = 0; i < canvas.wide; i++){
+    for(let j = 0; j < canvas.hgt; j++){
+    fill(0);
+    if(board[i][j] == true)fill(255);
+    stroke(100);
+    rect(i * canvas.cell_sz, j * canvas.cell_sz, canvas.cell_sz - 1, canvas.cell_sz - 1);
+    }
+  }
+}//End of drawGrid
+
+//Function to load the board with initial conditions
+function emptyBoard(){
+  for(let i = 0; i < canvas.wide; i++){
+    if (board[i] == undefined)board[i] = new Array(canvas.hgt);
+    for(let j = 0; j < canvas.hgt; j++){
+      board[i][j] = 0;
+    }
+  }
+}//End of emptyBoard
+
+//Function to add flashy cursor and update grid if unpaused
+function nextDraw(){
+  fill(random(255),random(255),random(255));
+  stroke(100);
+  rect(nextUp.x * canvas.cell_sz, nextUp.y * canvas.cell_sz, canvas.cell_sz - 1,
+    canvas.cell_sz -1);
+	if(nextUp.y > canvas.hgt)pause = false;
+	if(pause){
+	  if(frames % frame_up == 0){
+		fill(board[nextUp.x][nextUp.y] * 255);
+		rect(nextUp.x * canvas.cell_sz, nextUp.y * canvas.cell_sz, canvas.cell_sz - 1,
+		  canvas.cell_sz -1);
+		  ++nextUp.x;
+	  }
+	  if(nextUp.x > canvas.wide-1){
+		nextUp.x = 0;
+		++nextUp.y;
+	  }
+	}
+}//End of nextDraw
+
+//Calculate if the value for the cellular automota, rule 150 is based on the
+//values of the board above; if 3 are true return true, only 2 true return false
+//if one is true return true & finally 0 true returns false
+function cella(){
+  let check = 0;
+  
+	for(let y = 1; y < canvas.hgt; y++){
+		
+        //EDITED to LHS is always false, to return to last ver change: check = 1 + .....
+		//LHS-grid is always false&add first values above
+		check = board[0][y-1] + board[1][y-1];
+		//Now evaluate left edge case
+		if(check == 1 || check == 3)board[0][y] = 1;
+		else board[0][y] = 0;
+		//Remove edge case
+		//EDITED- REMOVED: TO LHS IS FALSE: check--;
+		
+
+		for(let x = 1; x < canvas.wide - 1; x++){//Leave 1st/last row for off-edge cases
+		  check = check + board[x+1][y-1];//Check next value
+		  //console.log(check,x,y);
+		  //Now evaluate bulk cases
+		  if(check == 1 || check == 3)board[x][y] = 1;
+		  else board[x][y] = 0;
+		  //Cleanup first case
+		  check = check - board[x-1][y-1];
+		}
+		//RHS-grid is always false dont add
+		//Now evaluate right edge case
+		if(check == 1 || check == 3)board[canvas.wide - 1][y] = 1;
+		else board[canvas.wide - 1][y] = 0;
+	}
+  
+}//End of cella
